@@ -1,6 +1,5 @@
-**Author:** Cairthenn / Voliathon
-**Version:** 1.40
-**Date:** June 4, 2026
+This sits outside of the Official Windower Dressup code.  I've got all the models listed in this repository.
+Due to creative differences I'm not putting this into the official Lua repo.
 
 # DressUp
 
