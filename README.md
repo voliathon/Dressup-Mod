@@ -52,6 +52,5 @@
 ----
 
 #### To do:
-* Add shield models.
-* Allow for monster models (others currently lose animations if transformed).
-* Refine profile system.
+* Nothing for now
+  
