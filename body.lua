@@ -1,5 +1,4 @@
--- Copyright © 2013, Cairthenn
--- Copyright © 2026, Windower Team
+-- Copyright © 2013-2026, Cairthenn/Voliathon
 -- All rights reserved.
 
 -- Redistribution and use in source and binary forms, with or without
