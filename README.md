@@ -1,6 +1,6 @@
 All models added to the [gear].lua files up until June 2026.
 
-This code sits outside of the Official Windower Dressup code.  I've got all the models listed in this repository.
+This code sits outside of the Official Windower Dressup code.  I've got all the models listed in this repository. If you play Final Fantasy 14 this addon is the FFXI equivalent of Glamour. 
 Due to creative differences I'm not putting this into the official Lua repo.
 
 I also refactored not just the [gear].lua files but the DressUp.lua, static_variables.lua, and helper_functions.lua
