@@ -1,6 +1,9 @@
 This sits outside of the Official Windower Dressup code.  I've got all the models listed in this repository.
 Due to creative differences I'm not putting this into the official Lua repo.
 
+I also refactored not just the [gear].lua files but the DressUp.lua, static_variables.lua, and helper_functions.lua
+The code needed a cleanup.
+
 # DressUp
 
 * Allows you to specify custom gear models for yourself, others, or individual players. Also allows for 1:1 model replacement similar to the functionality of .DAT swapping.
