@@ -32,7 +32,7 @@ function get_item_id(str, slot, arg2)
         return "None"
     else
         for k,v in pairs(models[slot]) do
-            if (v['enl'] and v['enl']:lower() == str) or (v['name'] and v['name']:lower() == str) then
+            if (v['name'] and v['name']:lower() == str) then
                 if wants_ag then
                     if v['afterglow'] then
                         item_result = k
