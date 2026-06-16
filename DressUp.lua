@@ -1,4 +1,4 @@
--- Copyright © 2013-2017, Cairthenn
+-- Copyright © 2013-2026, Cairthenn/Voliathon
 -- All rights reserved.
 
 -- Redistribution and use in source and binary forms, with or without
@@ -25,17 +25,17 @@
 -- SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 _addon.name = 'DressUp'
-_addon.author = 'Cair'
-_addon.version = '1.40'
+_addon.author = 'Voliathon - Original Cair'
+_addon.version = '2.0.0' -- Updated for modernization
 _addon.commands = {'DressUp','du'}
 
-
 packets = require('packets')
+local texts = require('texts')
 require('luau')
 require('helper_functions')
 require('static_variables')
 
-
+-- Models remains global so the required files can populate it
 models = {}
 require('main')
 require('sub')
@@ -48,8 +48,33 @@ require('ranged')
 
 settings = config.load(defaults)
 
+local help_display = texts.new(helptext, {
+    pos = {x = 20, y = 20},
+    bg = {alpha = 200, red = 0, green = 0, blue = 0},
+    flags = {draggable = true},
+    text = {size = 10, font = 'Consolas', alpha = 255, red = 255, green = 255, blue = 255}
+})
 
-model_names = S{"Face","Race","Head","Body","Hands","Legs","Feet","Main","Sub","Ranged"}
+local info = T{
+    names = T{},
+    self = T{},
+    party = S{}
+}
+
+-- Pre-allocated sets for performance optimization
+local model_names = S{"Face","Race","Head","Body","Hands","Legs","Feet","Main","Sub","Ranged"}
+local valid_slots = S{"head","body","hands","legs","feet","main","sub","ranged","race","face"}
+local valid_targets = S{"self","others","player"}
+local valid_races = S{0,1,2,3,4,5,6,7,8}
+local valid_genders = S{"male","female","m","f"}
+local valid_blink_cmds = S{"blinking","blinkmenot","bmn"}
+local valid_blink_targets = S{"self","others","party","all","follow"}
+local valid_blink_types = S{"target","always","combat","all"}
+local bool_true = S{"on","true","t"}
+local bool_false = S{"off","false","f"}
+local clear_cmds = S{"clear","remove","clearsettings"}
+local valid_clear_targets = S{"replacements","self","others","player"}
+local replace_cmds = S{"replacements","replace","switch"}
 
 local initialize = function()
     local player = windower.ffxi.get_player()
@@ -83,7 +108,7 @@ windower.register_event('logout', function()
     info.self:clear()
 end)
 
-windower.register_event('job change',function(job)
+windower.register_event('job change', function(job)
     if load_profile(res.jobs[job].name_short) then
         update_model(info.self.index)
         notice('Loaded profile: ' .. res.jobs[job].name_short)
@@ -93,19 +118,19 @@ windower.register_event('job change',function(job)
     end
 end)
 
-
 local modify_gear = function(packet, name, freeze, models)
     local modified = false
 
     for k, v in pairs(packet) do
         if model_names[k] then
-            if rawget(settings, name) and settings[name][k:lower()] then
+            local k_lower = k:lower()
+            if rawget(settings, name) and settings[name][k_lower] then
                 -- Settings for individuals
-                packet[k] = settings[name][k:lower()]
+                packet[k] = settings[name][k_lower]
                 modified = true
-            elseif table.containskey(settings.replacements[k:lower()], tostring(v)) then
+            elseif table.containskey(settings.replacements[k_lower], tostring(v)) then
                 -- Replace specific gear
-                packet[k] = settings.replacements[k:lower()][tostring(v)]
+                packet[k] = settings.replacements[k_lower][tostring(v)]
                 modified = true
             elseif freeze and models and models[k] then
                 -- Swap the model values from memory to the packet to prevent blinking
@@ -118,8 +143,7 @@ local modify_gear = function(packet, name, freeze, models)
     return modified, packet
 end
 
-windower.register_event('incoming chunk',function (id, _, data)
-    
+windower.register_event('incoming chunk', function(id, _, data)
     if id ~= 0x00A and id ~= 0x00D and id ~= 0x051 then
         return
     end
@@ -132,7 +156,7 @@ windower.register_event('incoming chunk',function (id, _, data)
         info.self.id = packet['Player']
         info.self.index = packet['Player Index']
         info.self.name = packet['Player Name']:lower()
-        modified,packet = modify_gear(packet, info.self.name)
+        modified, packet = modify_gear(packet, info.self.name)
         return modified and packets.build(packet)
     end
 
@@ -143,22 +167,23 @@ windower.register_event('incoming chunk',function (id, _, data)
     local char_id = packet.Player or info.self.id
     local char_index = packet.Index or info.self.index
     local character = windower.ffxi.get_mob_by_index(char_index or -1)
-    local blink_type, name = 'others'
-    local models
+    local blink_type, name = 'others', 'others'
+    local chunk_models
 
     if character and character.models and table.length(character.models) == 9 and
-        (id == 0x051 or (id == 0x00D and character.id == packet.Player) ) then
-        models = T{
+        (id == 0x051 or (id == 0x00D and character.id == packet.Player)) then
+        chunk_models = T{
             Race    = character.race,
             Face    = character.models[1],
-            Head    = character.models[2]+0x1000,
-            Body    = character.models[3]+0x2000,
-            Hands   = character.models[4]+0x3000,
-            Legs    = character.models[5]+0x4000,
-            Feet    = character.models[6]+0x5000,
-            Main    = character.models[7]+0x6000,
-            Sub     = character.models[8]+0x7000,
-            Ranged  = character.models[9]+0x8000}
+            Head    = character.models[2] + 0x1000,
+            Body    = character.models[3] + 0x2000,
+            Hands   = character.models[4] + 0x3000,
+            Legs    = character.models[5] + 0x4000,
+            Feet    = character.models[6] + 0x5000,
+            Main    = character.models[7] + 0x6000,
+            Sub     = character.models[8] + 0x7000,
+            Ranged  = character.models[9] + 0x8000
+        }
     end
 
     if not info.names[char_id] then
@@ -186,28 +211,313 @@ windower.register_event('incoming chunk',function (id, _, data)
         blink_type = "self"
     elseif settings[info.names[char_id]] then
         name = info.names[char_id]
-    else
-        name = "others"
     end
     
     -- Model ID 0xFFFF in ranged slot signifies a monster. This prevents undesired results.
-    modified,packet = modify_gear(packet, name, blink_logic(blink_type, char_index, player), models)
+    modified, packet = modify_gear(packet, name, blink_logic(blink_type, char_index, player), chunk_models)
     return packet['Ranged'] ~= 0xFFFF and modified and packets.build(packet)
 end)
 
---[[windower.register_event('outgoing chunk',function (id, data)
-    if id == 0x17 then
-        -- Block the NPC/armor mismatch error packet
-        return true
-    end
-end)
--- It appear that blocking this packet might have been causing people to not show up occasionally.
--- Rather than an unnatural error packet, it might be a normal part of client-server communication.]]
-
-windower.register_event('addon command', function (command,...)
+windower.register_event('addon command', function(command, ...)
     command = command and command:lower() or 'help'
     local args = T{...}:map(string.lower)
     local _clear = nil
     
     if command == 'help' then
-        print(helptext)
+        if help_display:visible() then
+            help_display:hide()
+        else
+            help_display:show()
+        end
+        return
+    end
+
+    ----------------------------------------------------------
+    --------------- System & Profile Commands ----------------
+    ----------------------------------------------------------
+    if command == "autoupdate" or command == "au" then
+        settings.autoupdate = not settings.autoupdate
+        notice("AutoUpdate setting is now " .. tostring(settings.autoupdate) .. ".")
+        return
+        
+    elseif command == "save" or command == "s" then
+        save_profile(args:concat(''))
+        return
+    
+    elseif command == "load" or command == "l" then
+        local profile_name = args:concat('')
+        if load_profile(profile_name) then
+            notice('Loaded profile: ' .. profile_name)
+        else
+            error('Failed to find a profile named: ' .. profile_name)
+        end
+        return
+    
+    elseif command == "delete" or command == "d" then
+        local profile_name = args:concat(''):lower()
+        if settings.profiles[profile_name] then
+            settings.profiles[profile_name] = nil
+            notice('Deleted profile: ' .. profile_name)
+            settings:save('all')
+        else
+            error('Failed to find a profile named: ' .. profile_name)
+        end
+        return
+    end
+
+    ----------------------------------------------------------
+    --------------- Commands for model changes ---------------
+    ----------------------------------------------------------
+    if valid_targets:contains(command) then
+        if not args[1] then
+            error("That is not a valid selection.")
+            return
+        end
+        
+        if command == "player" then
+            command = args:remove(1)
+        elseif command == "self" then
+            command = info.self.name
+        end
+        
+        if not settings[command] then
+            settings[command] = {}
+        end
+        
+        local _selection = valid_slots:contains(args[1]) and args:remove(1)
+
+        if not _selection then
+            error("That is not a valid selection.")
+            return    
+        elseif _selection == "race" then
+            if not args[1] then
+                error("Please specify a race.")
+                return
+            elseif table.containskey(_races, args[1]) then 
+                if args[1] == "mithra" or args[1] == "galka" then
+                    settings[command]["race"] = _races[args[1]]
+                elseif args[2] and valid_genders:contains(args[2]) then
+                    settings[command]["race"] = _races[args[1]][args[2]]
+                else
+                    error("Please specify male or female.")
+                    return
+                end
+            elseif valid_races:contains(tonumber(args[1])) then
+                settings[command]["race"] = tonumber(args[1])
+            else
+                error("Invalid race provided.")
+                return
+            end
+        
+        elseif _selection == "face" then
+            if not args[1] then
+                error("Please specify a face.")
+                return
+            elseif table.containskey(_faces, args[1]) then
+                settings[command]["face"] = _faces[args[1]]
+            elseif tonumber(args[1]) and tonumber(args[1]) >= 0 and tonumber(args[1]) <= 35 then
+                settings[command]["face"] = tonumber(args[1])
+            else
+                error("Invalid face ID or name provided. Please use standard designations like 1a, 1b, etc., or a raw number between 0 and 35.")
+                return
+            end
+        
+        else
+            if not args[1] then
+                error("Please specify an item.")
+                return
+            else
+                local ag_flag = (args[2] == "ag" or args[2] == "afterglow") and args:remove(2) or nil
+                local item_id = tonumber(args[1]) or get_item_id(args[1], _selection, ag_flag)
+                if not item_id then
+                    error("That item is not recognized.")
+                    return    
+                elseif table.containskey(models[_selection], item_id) then
+                    if models[_selection][item_id] == ' ' then 
+                        error("That item has not been identified.")
+                        return
+                    else
+                        settings[command][_selection] = models[_selection][item_id].model
+                    end
+                else
+                    error("That is not the correct item type.")
+                    return
+                end
+            end
+        end
+        
+    ----------------------------------------------------------
+    ---------------- Commands for blink rules ----------------
+    ----------------------------------------------------------
+    elseif valid_blink_cmds:contains(command) then
+        if not args[1] or args[1] == "settings" then
+            local _print = valid_blink_targets:contains(args[2]) and args[2] or "global"
+            print_blink_settings(_print)
+            return
+        else
+            local _one = valid_blink_targets:contains(args[1]) and args[1]
+            local _two = valid_blink_types:contains(args[2]) and args[2]
+            local _blinkbool = "flip"
+            
+            if args[3] then
+                if bool_true:contains(args[3]) then
+                    _blinkbool = true
+                elseif bool_false:contains(args[3]) then
+                    _blinkbool = false
+                end
+            end
+            
+            if _one and _two then
+                if _blinkbool == "flip" then
+                    if _two == "all" then
+                        error("Specify [on/off] for selection 'all'.")
+                        return
+                    else
+                        settings.blinking[_one][_two] = not settings.blinking[_one][_two]
+                        print_blink_settings(_one)
+                    end
+                else
+                    if _two == "all" then
+                        settings.blinking[_one]["target"] = _blinkbool
+                        settings.blinking[_one]["always"] = _blinkbool
+                        settings.blinking[_one]["combat"] = _blinkbool
+                    else
+                        settings.blinking[_one][_two] = _blinkbool
+                    end
+                    print_blink_settings(_one)
+                end
+            else
+                error("Invalid selections for blinking.")
+                return
+            end
+        end
+        
+    ----------------------------------------------------------
+    ------------- Commands for clearing settings -------------
+    ----------------------------------------------------------
+    elseif clear_cmds:contains(command) then
+        if not args[1] then
+            error("Please specify something to clear.")
+            return
+        end
+        _clear = valid_clear_targets:contains(args[1]) and args:remove(1)
+        if _clear == "player" then
+            _clear = args:remove(1)
+        elseif _clear == "self" then
+            _clear = info.self.name
+        end
+        
+        local _selection = valid_slots:contains(args[1]) and args:remove(1)
+        if not _clear then
+            error("Invalid clearing selection.")
+            return
+        elseif _clear == "replacements" then
+            if not _selection and settings[_clear] then
+                settings[_clear] = { face = {}, race = {}, head = {}, body = {}, hands = {}, legs = {}, feet = {}, main = {}, sub = {}, ranged = {} }
+            elseif not args[1] then
+                settings[_clear][_selection] = {}
+            elseif args[1] and settings[_clear][_selection] then
+                settings[_clear][_selection][args[1]] = nil
+            else
+                error("The specified settings do not exist.")
+                return
+            end
+        else
+            if not _selection and settings[_clear] then
+                settings[_clear] = {}
+            elseif settings[_clear][_selection] then
+                settings[_clear][_selection] = nil
+            else
+                error("The specified settings do not exist.")
+                return
+            end
+        end
+    
+    ----------------------------------------------------------
+    -------------- Commands for 1:1 replacement --------------
+    ----------------------------------------------------------
+    elseif replace_cmds:contains(command) then
+        if not args[1] then
+            error("Please specify something to replace.")
+            return
+        end
+        
+        local _models = {}
+        local _selection = valid_slots:contains(args[1]) and args:remove(1)
+        
+        if not _selection then
+            error("That is not a valid selection.")
+            return    
+        elseif _selection == "race" then
+            while #_models ~= 2 do
+                if not args[1] then
+                    error("Please specify a race for #"..#_models + 1)
+                    return
+                elseif table.containskey(_races, args[1]) then 
+                    if args[1] == "mithra" or args[1] == "galka" then
+                        table.append(_models, _races[args:remove(1)])
+                    elseif args[2] and valid_genders:contains(args[2]) then
+                        table.append(_models, _races[args:remove(1)][args:remove(1)])
+                    else
+                        error("Please specify male or female for #"..#_models + 1)
+                        return
+                    end
+                elseif valid_races:contains(tonumber(args[1])) then
+                    table.append(_models, tonumber(args:remove(1)))
+                end
+            end
+        elseif _selection == "face" then
+            while #_models ~= 2 do
+                if not args[1] then
+                    error("Please specify a face for #"..#_models + 1)
+                    return
+                elseif table.containskey(_faces, args[1]) then
+                    table.append(_models, _faces[args:remove(1)])
+                elseif tonumber(args[1]) and tonumber(args[1]) >= 0 and tonumber(args[1]) <= 35 then
+                    table.append(_models, tonumber(args:remove(1)))
+                else
+                    error("Invalid face ID or name provided: " .. tostring(args[1]) .. ". Please use standard designations like 1a, 1b, etc., or a raw number between 0 and 35.")
+                    return
+                end
+            end
+        else
+            while #_models ~= 2 do
+                if not args[1] then
+                    error("Please specify an item.")
+                    return
+                else
+                    local ag_flag = (args[2] == "ag" or args[2] == "afterglow") and args:remove(2) or nil
+                    local item_id = tonumber(args[1]) or get_item_id(args[1], _selection, ag_flag)
+                    args:remove(1)
+                    if not item_id then
+                        error("Item #".. #_models + 1 .." is not recognized.")
+                        return    
+                    elseif table.containskey(models[_selection], item_id) then
+                        if models[_selection][item_id] == ' ' then 
+                            error("Item #".. #_models + 1 .." has not been identified.")
+                            return
+                        else
+                            table.append(_models, models[_selection][item_id].model)
+                        end
+                    else
+                        error("Item #".. #_models + 1 .." is not the correct type.")
+                        return
+                    end
+                end
+            end
+        end
+        
+        if #_models == 2 then
+            settings.replacements[_selection][tostring(_models[1])] = tostring(_models[2])
+        else
+            error("Something went wrong!")
+            return
+        end
+    end
+    
+    if settings.autoupdate and ((command == info.self.name) or (_clear == info.self.name)) then
+        update_model(windower.ffxi.get_player().index)
+    end
+    
+    settings:save('all')
+end)

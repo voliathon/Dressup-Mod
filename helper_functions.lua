@@ -1,4 +1,4 @@
--- Copyright © 2013-2015, Cairthenn
+-- Copyright © 2013-2026, Cairthenn/Voliathon
 -- All rights reserved.
 
 -- Redistribution and use in source and binary forms, with or without
@@ -25,51 +25,55 @@
 -- SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 function get_item_id(str, slot, arg2)
-    local item_result = false
+    if not str then return false end
+    if str:lower() == "none" then return "None" end
+
     local wants_ag = (arg2 == "ag" or arg2 == "afterglow")
+    local search_str = str:lower()
+    local fallback_item_id = false
     
-    if str == "none" then
-        return "None"
-    else
-        for k,v in pairs(models[slot]) do
-            if (v['name'] and v['name']:lower() == str) then
-                if wants_ag then
-                    if v['afterglow'] then
-                        item_result = k
-                        break
-                    end
-                else
-                    if not v['afterglow'] then
-                        item_result = k
-                        break
-                    end
+    for k, v in pairs(models[slot]) do
+        local enl = v['enl'] and v['enl']:lower() or ""
+        local name = v['name'] and v['name']:lower() or ""
+        
+        if enl == search_str or name == search_str then
+            if wants_ag then
+                if v['afterglow'] then
+                    return tonumber(k)
                 end
-                
-                -- Fallback to whatever matched if we don't find the exact afterglow requirement
-                if not item_result then
-                    item_result = k
+            else
+                if not v['afterglow'] then
+                    return tonumber(k)
                 end
             end
-        end
-        if item_result then 
-            return tonumber(item_result)
-        else
-            return false
+            
+            -- Save this as a fallback if we don't find the exact afterglow requirement
+            fallback_item_id = k
         end
     end
+
+    return fallback_item_id and tonumber(fallback_item_id) or false
 end
 
 function update_model(index)
-    packets.inject(packets.new('outgoing', 0x016, { ['Target Index'] = index }))
+    -- Relies on 'packets' being a global variable from DressUp.lua
+    if packets then
+        packets.inject(packets.new('outgoing', 0x016, { ['Target Index'] = index }))
+    end
 end
 
 function load_profile(name)
+    if not name then return false end
 
-    if settings.profiles[windower.ffxi.get_player().name:lower() ..'_'.. name:lower()] then
-        settings[windower.ffxi.get_player().name:lower()]:update(settings.profiles[windower.ffxi.get_player().name:lower() ..'_'.. name:lower()])
+    local player_name = windower.ffxi.get_player().name:lower()
+    local profile_name = name:lower()
+    local specific_profile = player_name .. '_' .. profile_name
+
+    if settings.profiles[specific_profile] then
+        settings[player_name]:update(settings.profiles[specific_profile])
         return true
-    elseif settings.profiles[name:lower()] then
-        settings[windower.ffxi.get_player().name:lower()]:update(settings.profiles[name:lower()])
+    elseif settings.profiles[profile_name] then
+        settings[player_name]:update(settings.profiles[profile_name])
         return true
     end
     
@@ -77,70 +81,77 @@ function load_profile(name)
 end
 
 function save_profile(name)
-    if not name or name:len() == 0 then 
+    if type(name) ~= 'string' or name:len() == 0 then 
         error('No profile name was entered.') 
+        return
     end
     
-    if not settings.profiles[name:lower()] then settings.profiles[name:lower()] = T{} end    
-    settings.profiles[name:lower()]:update(settings[windower.ffxi.get_player().name:lower()])
+    local player_name = windower.ffxi.get_player().name:lower()
+    local profile_name = name:lower()
+
+    if not settings.profiles[profile_name] then 
+        settings.profiles[profile_name] = T{} 
+    end    
+    
+    settings.profiles[profile_name]:update(settings[player_name])
     notice('Saved your current settings to the profile: ' .. name)
 end
 
-function blink_logic(blink_type,character_index,player)
-    if settings.blinking["all"]["always"] then
-        return true
-    elseif settings.blinking[blink_type]["always"] then
+function blink_logic(blink_type, character_index, player)
+    local all_blink = settings.blinking["all"]
+    local specific_blink = settings.blinking[blink_type]
+
+    if all_blink["always"] or specific_blink["always"] then
         return true
     end
     
-    if settings.blinking["all"]["combat"] and player.in_combat then
-        return true
-    elseif settings.blinking[blink_type]["combat"] and player.in_combat then
+    if player.in_combat and (all_blink["combat"] or specific_blink["combat"]) then
         return true
     end
 
-    if settings.blinking["all"]["target"] and player.target_index == character_index then
-        return true
-    elseif settings.blinking[blink_type]["target"] and player.target_index == character_index then
+    if player.target_index == character_index and (all_blink["target"] or specific_blink["target"]) then
         return true
     end
     
     return false
 end
 
+-- Helper table mapping logic for settings output
+local function map(t, func)
+    local out = {}
+    for k, v in pairs(t) do
+        out[#out + 1] = func(k, v)
+    end
+    return out
+end
+
+local function formatting(k, v) 
+    local display_val = 'F'
+    local val_str = tostring(v):lower()
+    
+    if val_str == "true" then
+        display_val = ('T'):text_color(0, 255, 0)
+    end
+    
+    return k:gsub("^%l", string.upper) .. ': [' .. display_val .. ']' 
+end
+
 function print_blink_settings(option)
-    print('DressUp (v'.._addon.version..') Blink Prevention Settings') 
+    print('DressUp (v' .. _addon.version .. ') Blink Prevention Settings') 
+    
     if option == "global" or option == "all" then
-    print(('All:    '):text_color(255,255,255)..table.concat(map(settings.blinking["all"],formatting)," "))
+        print(('All:    '):text_color(255, 255, 255) .. table.concat(map(settings.blinking["all"], formatting), " "))
     end
     if option == "global" or option == "self" then
-    print(('Self:   '):text_color(255,255,255)..table.concat(map(settings.blinking["self"],formatting)," "))
+        print(('Self:   '):text_color(255, 255, 255) .. table.concat(map(settings.blinking["self"], formatting), " "))
     end
     if option == "global" or option == "others" then
-    print(('Others: '):text_color(255,255,255)..table.concat(map(settings.blinking["others"],formatting)," "))
+        print(('Others: '):text_color(255, 255, 255) .. table.concat(map(settings.blinking["others"], formatting), " "))
     end
     if option == "global" or option == "party" then
-    print(('Party:  '):text_color(255,255,255)..table.concat(map(settings.blinking["party"],formatting)," "))
+        print(('Party:  '):text_color(255, 255, 255) .. table.concat(map(settings.blinking["party"], formatting), " "))
     end
     if option == "global" or option == "follow" then
-    print(('Follow: '):text_color(255,255,255)..table.concat(map(settings.blinking["follow"],formatting)," "))
+        print(('Follow: '):text_color(255, 255, 255) .. table.concat(map(settings.blinking["follow"], formatting), " "))
     end
-end
-
-function map(t, func)
-  local out = {}
-  for k,v in pairs(t) do
-    out[k] = func(k, v)
-  end
-  return out
-end
-
-function formatting(k, v) 
-    v = tostring(v):gsub("^%l", string.upper)
-    if windower.wc_match(v,"True") then
-        v = ('T'):text_color(0, 255, 0)
-    else
-        v = 'F'
-    end
-  return k:gsub("^%l", string.upper) ..': ['..v..']' 
 end
