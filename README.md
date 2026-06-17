@@ -6,6 +6,10 @@ Due to creative differences I'm not putting this into the official Lua repo.
 I also refactored not just the [gear].lua files but the DressUp.lua, static_variables.lua, and helper_functions.lua
 The code needed a cleanup.
 
+This code like Altana Viewer requires a lot of manually looking and testing. If you know when a certain piece of gear initially came out, it will typically have an older model #. Your newer gear unless it takes the same model as something before it will have a later model #.  I had to brute the newer stuff.  I created a powershell script to list out everything from the PolUtils Resources file. That gave me the id.  For the model # itself they didn't have that information. I pulled from LandSandBoad initially. Later stuff from 2023 and beyond they were outdated.  I then used xim to find stuff up until Odyssey and primes to find the model #.  Limbus and rare stuff I brute forced the model # until I found what I was looking for. 
+
+The rare(Unobtainable) stuff I show in Altana Viewer I also found for DressUp.
+
 ![New Face Models Available](images/NewFaceModels.png)
 
 <img src="images/Screenshot 2026-06-16 180216.png" alt="New Glow and Limbus Gear"><img src="images/Screenshot 2026-06-16 180309.png" alt="Nanaa Mihgo Gear"><br>
