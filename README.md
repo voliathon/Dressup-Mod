@@ -36,9 +36,9 @@ The code needed a cleanup.
   **Slots:** `head`, `body`, `hands`, `legs`, `feet`, `main`, `sub`, `ranged`.
   Appending `ag` or `afterglow` to a weapon command assigns its afterglow version.
   *Examples:* 
-  `//du self head "walahra turban"`
-  `//du self main opashoro ag`
-  `//du others race mithra female`
+  `//du self head "walahra turban"` 
+  `//du self main opashoro ag` 
+  `//du others race mithra female` 
 
 * **`//du clear [self|others|player] <name> [race|face|slot]`**
   Clears settings for the specified selection.
