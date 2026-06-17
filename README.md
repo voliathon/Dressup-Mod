@@ -8,7 +8,7 @@ The code needed a cleanup.
 
 ![New Face Models Available](images/NewFaceModels.png)
 
-<img src="images/Screenshot 2026-06-16 180216.png" alt="New Glow and Limbus Gear"><img src="images/Screenshot 2026-06-16 180309.png" alt="Nanaa Mihgo Gear"><img src="images/Screenshot 2026-06-16 180611.png" alt="Mannequin and Ingrid Style"><img src="images/Screenshot 2026-06-16 202343.png" alt="Olduum Staff and Spitewarden Gear">
+<img src="images/Screenshot 2026-06-16 180216.png" alt="New Glow and Limbus Gear"><img src="images/Screenshot 2026-06-16 180309.png" alt="Nanaa Mihgo Gear"><img src="images/Screenshot 2026-06-16 180611.png" alt="Mannequin and Ingrid Style"><img src="images/Screenshot 2026-06-16 202344.png" alt="Olduum Staff and Spitewarden Gear">
 
 
 # DressUp
