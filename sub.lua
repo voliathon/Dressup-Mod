@@ -28,7 +28,10 @@
 models.sub = {}
 
 models.sub[0] = { name = "empty"  , model = 24576 }
+ 
 models.sub[100] = { name = "gm shield" , model = 22} --wicked glow
+models.sub[101] = { name = "uran-mafran club" , model = 901}
+
 models.sub[10800] = { name = "castellans shield" , model = 34}
 models.sub[10801] = { name = "psychist shield" , model = 36}
 models.sub[10802] = { name = "majorelle shield" , model = 47}

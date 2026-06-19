@@ -28,6 +28,7 @@ models.main[0] = { name = "empty"  , model = 24576 }
 models.main[101] = { name = "garazu-horeizu's staff" , model = 889}
 models.main[102] = { name = "garazu-horeizu's staff ii" , model = 888} --using a jank # at the start so ignore
 models.main[103] = { name = "olduum staff" , model = 898} --galka only | Glyphweaver Sikool Ja uses this in TVR 5-3
+models.main[104] = { name = "uran-mafran club" , model = 901} --Uran-Mafran uses this in TVR 7-2
 models.main[16385] = { name = "cesti" , model = 24702}
 models.main[16386] = { name = "lizard cesti" , model = 24703}
 models.main[16387] = { name = "poison cesti" , model = 24704}
