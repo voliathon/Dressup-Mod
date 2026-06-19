@@ -9,7 +9,7 @@ The code needed a cleanup.
 
 This code like Altana Viewer requires a lot of manually looking and testing. If you know when a certain piece of gear initially came out, it will typically have an older model #. Your newer gear unless it takes the same model as something before it will have a later model #.  I had to brute the newer stuff.  I created a powershell script to list out everything from the PolUtils Resources file. That gave me the id.  For the model # itself they didn't have that information. I pulled from LandSandBoad initially. Later stuff from 2023 and beyond they were outdated.  I then used xim to find stuff up until Odyssey and primes to find the model #.  Limbus and rare stuff I brute forced the model # until I found what I was looking for. 
 
-The rare(Unobtainable) stuff I show in Altana Viewer I also found for DressUp.
+The rare(Unobtainable) stuff that I show in Altana Viewer, I will also found it for DressUp. As those findings occur I will continually update dressup [gear].lua files
 
 ![New Face Models Available](images/NewFaceModels.png)
 
