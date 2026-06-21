@@ -244,6 +244,10 @@ windower.register_event('addon command', function(command, ...)
         save_profile(args:concat(''))
         return
     
+    elseif command == "profiles" or command == "list" or command == "plist" then
+        list_profiles()
+        return
+    
     elseif command == "load" or command == "l" then
         local profile_name = args:concat('')
         if load_profile(profile_name) then

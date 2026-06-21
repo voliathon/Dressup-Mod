@@ -46,8 +46,9 @@ helptext = [[DressUp - Command List:  //du  or //du help - help menu toggle
 5. autoupdate / au
     - Toggles updating your character's appearance instantly as you type commands.
 	
-6. save / load / delete <profile name>
+6. save / load / delete <profile name>  |  list / plist / profiles
     - Manages gear profiles for your own character.
+    - View all saved profiles with: //du list (or plist / profiles)
     - Profiles named JOB or NAME_JOB are loaded automatically on job change.
  ]]
 

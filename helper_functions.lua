@@ -80,6 +80,18 @@ function load_profile(name)
     return false
 end
 
+function list_profiles()
+    if not settings.profiles or table.length(settings.profiles) == 0 then
+        notice("No profiles have been saved yet.")
+        return
+    end
+
+    print('DressUp Saved Profiles:')
+    for profile_name, _ in pairs(settings.profiles) do
+        print('- ' .. profile_name)
+    end
+end
+
 function save_profile(name)
     if type(name) ~= 'string' or name:len() == 0 then 
         error('No profile name was entered.') 
@@ -94,6 +106,10 @@ function save_profile(name)
     end    
     
     settings.profiles[profile_name]:update(settings[player_name])
+    
+    -- FORCE THE HARD SAVE TO DISK HERE
+    settings:save('all')
+    
     notice('Saved your current settings to the profile: ' .. name)
 end
 
